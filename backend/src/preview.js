@@ -106,18 +106,20 @@ export async function fetchPreview(rawUrl) {
       redirect: 'manual',
       signal: AbortSignal.timeout(8000),
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; BazhankaBot/1.0; link preview)',
-        Accept: 'text/html,application/xhtml+xml',
-        'Accept-Language': 'uk,en;q=0.8',
+        // Many shops (Rozetka, Silpo…) block anything that looks like a bot, so look like a normal browser.
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'uk-UA,uk;q=0.9,en;q=0.8',
       },
-    }).catch(() => null);
-    if (!res) throw new HttpError(502, 'The shop did not respond');
+    }).catch((e) => { console.warn(`preview: ${current.hostname} failed:`, e.message); return null; });
+    if (!res) throw new HttpError(502, 'The shop did not respond in time; fill the item in by hand');
     if (res.status >= 300 && res.status < 400 && res.headers.get('location')) {
       current = new URL(res.headers.get('location'), current);
       continue;
     }
     break;
   }
+  if (!res.ok) console.warn(`preview: ${current.hostname} answered ${res.status}`);
   if (!res.ok) throw new HttpError(502, `The shop answered with ${res.status}; fill the item in by hand`);
 
   // Read at most 2 MB.

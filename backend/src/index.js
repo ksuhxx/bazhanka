@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.js';
 import wishlistRoutes from './routes/wishlists.js';
 import santaRoutes from './routes/santa.js';
 import miscRoutes from './routes/misc.js';
+import { HttpError } from './util.js';
 
 const app = express();
 app.set('trust proxy', 1); // behind Render/Fly HTTPS proxy
@@ -44,7 +45,9 @@ if (fs.existsSync(staticDir)) {
 app.use((err, _req, res, _next) => {
   const status = err.status || (err.type === 'entity.parse.failed' ? 400 : 500);
   if (status >= 500) console.error(err);
-  res.status(status).json({ error: status >= 500 ? 'Something went wrong on our side' : err.message });
+  // Our own HttpError messages are safe to show (e.g. "The shop answered with 403"); hide unexpected errors.
+  const safe = err instanceof HttpError || status < 500;
+  res.status(status).json({ error: safe ? err.message : 'Something went wrong on our side' });
 });
 
 const port = Number(process.env.PORT || 3000);
