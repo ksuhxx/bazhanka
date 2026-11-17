@@ -137,7 +137,7 @@ function ItemForm({ wishlistId, item, onDone, onCancel }) {
         price: cur.price || preview.price || '',
         currency: preview.currency || cur.currency,
       }));
-      setStatus(preview.title ? 'ok' : 'partial');
+      setStatus(preview.blocked ? (preview.title ? 'blocked' : 'failed') : preview.title ? 'ok' : 'partial');
     } catch (err) {
       setStatus('failed');
       setError(err.message);
@@ -166,6 +166,7 @@ function ItemForm({ wishlistId, item, onDone, onCancel }) {
         <small className="muted">
           {status === 'loading' ? 'Looking up the product…' : status === 'ok' ? 'Filled in from the shop ✓ — check it below.' :
             status === 'partial' ? 'The shop shared only part of the details — please complete them.' :
+            status === 'blocked' ? 'This shop doesn\'t let us read its pages — we guessed the name from the link, please check it and add the price.' :
             status === 'failed' ? 'Could not read that page — fill the item in by hand.' : 'Paste a link and we fill in title, photo and price.'}
         </small>
       </label>

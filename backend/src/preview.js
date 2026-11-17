@@ -88,7 +88,38 @@ export function extractMetadata(html, pageUrl) {
   return out;
 }
 
+// When a shop blocks us, guess a readable title from the link itself:
+// silpo.ua/product/kava-jacobs-monarch-rozchynna-123 -> "Kava jacobs monarch rozchynna".
+const SKIP_SEGMENTS = new Set(['ua', 'uk', 'ru', 'en', 'product', 'products', 'p', 'item', 'goods', 'catalog', 'tovar']);
+export function titleFromUrl(rawUrl) {
+  let url;
+  try { url = new URL(rawUrl); } catch { return null; }
+  const words = (seg) => decodeURIComponent(seg)
+    .replace(/\.(html?|php|aspx?)$/i, '')
+    .split(/[-_+\s]+/)
+    .filter((w) => w && !/^[a-z]{0,2}\d{3,}$/i.test(w)); // drop ids / barcodes like p562745559
+  let best = [];
+  for (const seg of url.pathname.split('/')) {
+    if (!seg || SKIP_SEGMENTS.has(seg.toLowerCase())) continue;
+    const w = words(seg);
+    if (w.join(' ').length > best.join(' ').length) best = w;
+  }
+  if (!best.some((w) => /\p{L}/u.test(w))) return null;
+  const t = best.join(' ').slice(0, 300);
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 export async function fetchPreview(rawUrl) {
+  try {
+    return await fetchPagePreview(rawUrl);
+  } catch (err) {
+    // Bad / private links stay errors; a shop that blocks or times out gets a best-effort guess.
+    if (err.status !== 502) throw err;
+    return { url: rawUrl, title: titleFromUrl(rawUrl), image: null, price: null, currency: null, blocked: true };
+  }
+}
+
+async function fetchPagePreview(rawUrl) {
   let url;
   try {
     url = new URL(rawUrl);
