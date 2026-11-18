@@ -10,7 +10,9 @@ It solves two problems for students and their friends:
 
 Team: Inna Dermanska, Bohdana Skochynska, Ksenia Nimas (UCU).
 
-**Live demo:** `https://<your-service>.onrender.com` *(replace after deploying)*
+**Live demo:** https://d1je5vufmmk66c.cloudfront.net (HTTPS; sign up with any email and password) ·
+**Repository:** https://github.com/ksuhxx/bazhanka ·
+**User testing report:** [`docs/user_feedback_report.pdf`](docs/user_feedback_report.pdf)
 
 ## Features
 
@@ -69,7 +71,7 @@ frontend/   React 18 + Vite single-page app
   src/photo.js           shrinks and uploads own gift photos
 infra/      Dockerfile, docker-compose.yml (local), render.yaml (Render),
             ecr.yml / backend.yml / frontend.yml / certificate.sh (AWS, driven by the Makefile)
-docs/       AWS deployment report, deploy report, user-testing report template, screenshots
+docs/       user testing report (PDF) and its template, AWS deployment report, deploy report, screenshots
 ```
 
 ## Run locally
@@ -129,30 +131,7 @@ All configuration is via environment variables (see `backend/.env.example`):
 | `DONATION_LABEL` | no | text for that link, default “Support Bazhanka” |
 | `PORT` | no | default 3000 |
 
-## Deploy (HTTPS) — Render, free tier
-
-The app is a single Docker service plus a Postgres database, described in `infra/render.yaml`.
-
-1. Push this repository to GitHub.
-2. In [Render](https://render.com): **New → Blueprint**, pick the repo, set **Blueprint Path** to `infra/render.yaml`.
-3. When asked, fill in `ADMIN_EMAILS` (your team's emails) and optionally `DONATION_URL`.
-4. Deploy. Render builds `infra/Dockerfile`, creates the database, generates `JWT_SECRET`, and gives you
-   `https://bazhanka-xxxx.onrender.com` with HTTPS. The schema is created on first start.
-
-Notes: the free web service sleeps after ~15 minutes idle (the first request then takes ~30–50 s — open it before a demo);
-Render's free Postgres expires after 30 days, so for longer use point `DATABASE_URL` at a free [Neon](https://neon.tech) database with `DATABASE_SSL=true`.
-
-**Any other host** that runs Docker works the same way (Fly.io, Railway, a VPS behind Caddy):
-
-```bash
-docker build -f infra/Dockerfile -t bazhanka .
-```
-
-```bash
-docker run -p 3000:3000 -e DATABASE_URL=... -e JWT_SECRET=... bazhanka
-```
-
-## Deploy on AWS
+## Deploy (HTTPS) on AWS — how the live demo runs
 
 The production site runs on AWS in `us-east-1`, described by CloudFormation templates in `infra/` and driven by the `Makefile`
 (details and operations: `docs/aws_deployment_architecture_and_operations_report.md`).
@@ -202,6 +181,31 @@ make aws-deploy
 `DeletionPolicy: Snapshot`). `aws-plan-backend` shows what the backend update would change without applying it: no database resource
 may say `Replacement: True`. `aws-deploy` pushes the image, updates the backend stack (both functions) and then the frontend
 stack and files. Logs: `make aws-logs` (main function) and `make aws-logs-edge` (preview and gift ideas).
+
+## Alternative: deploy on Render (free tier)
+
+Not what the live demo uses, but the quickest way to run your own copy with HTTPS.
+
+The app is a single Docker service plus a Postgres database, described in `infra/render.yaml`.
+
+1. Push this repository to GitHub.
+2. In [Render](https://render.com): **New → Blueprint**, pick the repo, set **Blueprint Path** to `infra/render.yaml`.
+3. When asked, fill in `ADMIN_EMAILS` (your team's emails) and optionally `DONATION_URL`.
+4. Deploy. Render builds `infra/Dockerfile`, creates the database, generates `JWT_SECRET`, and gives you
+   `https://bazhanka-xxxx.onrender.com` with HTTPS. The schema is created on first start.
+
+Notes: the free web service sleeps after ~15 minutes idle (the first request then takes ~30–50 s — open it before a demo);
+Render's free Postgres expires after 30 days, so for longer use point `DATABASE_URL` at a free [Neon](https://neon.tech) database with `DATABASE_SSL=true`.
+
+**Any other host** that runs Docker works the same way (Fly.io, Railway, a VPS behind Caddy):
+
+```bash
+docker build -f infra/Dockerfile -t bazhanka .
+```
+
+```bash
+docker run -p 3000:3000 -e DATABASE_URL=... -e JWT_SECRET=... bazhanka
+```
 
 ## Measuring the validation goals
 
