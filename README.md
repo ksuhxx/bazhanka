@@ -12,7 +12,6 @@ Team: Inna Dermanska, Bohdana Skochynska, Ksenia Nimas (UCU).
 
 **Live demo:** https://d1je5vufmmk66c.cloudfront.net (HTTPS; sign up with any email and password) ·
 **Repository:** https://github.com/ksuhxx/bazhanka ·
-**User testing report:** [`docs/user_feedback_report.pdf`](docs/user_feedback_report.pdf)
 
 ## Features
 
